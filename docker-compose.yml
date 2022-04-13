@@ -9,6 +9,8 @@ services:
       - ./data:/data # Database
     networks:
       - swag_facebooc
+    ports:
+      - "8080:8080"
 
 networks:
   swag_facebooc:
