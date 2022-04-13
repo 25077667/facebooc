@@ -4,16 +4,15 @@ Proof-of-concept Facebook clone in C.
 The only dependency is SQLite3.
 
 # Prerequisites
-Install SQLite development package:
-```bash
-sudo apt-get install libsqlite3-dev
-```
+Install docker 
 
 # Build and Run
 ```bash
 cd facebooc
-make run
+docker network create swag_facebooc
+docker compose up
 ```
+Then go to `localhost:8080` to view the deployment
 
 Licensing
 ---------
