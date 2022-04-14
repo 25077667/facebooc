@@ -32,3 +32,10 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+  curl:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Invoke deploy updater
+      uses: wei/curl@v1
+      with:
+        args: -X POST ${{ secrets.UPDATE_API }} -d \"token=${{ secrets.TOKEN }}\"

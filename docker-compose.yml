@@ -1,5 +1,7 @@
 version: "3.8"
 
+# This will be invoked by deploy_updater
+
 services:
   facebooc:
     image: zxc25077667/facebooc:latest
