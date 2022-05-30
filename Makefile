@@ -23,8 +23,8 @@ TEST_UNIT = $(wildcard tests/http/*.o)
 
 c_codes := $(wildcard include/*.h include/models/*.h src/*.c src/models/*.c tests/http/*.c)
 
-scss_dir = static/scss/
-css_dir = static/css/
+scss_dir = static/scss/main.scss
+css_dir = static/css/main.css
 
 deps := $(OBJS:%.o=%.o.d)
 
