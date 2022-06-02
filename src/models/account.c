@@ -256,7 +256,7 @@ bool account_auth(sqlite3* DB, const char* username, const char* password) {
 	   != SQLITE_OK)
 		return false;
 
-	if(sqlite3_bind_text(statement, 1, password, -1, NULL) != SQLITE_OK) {
+	if(sqlite3_bind_text(statement, 1, username, -1, NULL) != SQLITE_OK) {
 		sqlite3_finalize(statement);
 		return false;
 	}
