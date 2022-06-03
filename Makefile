@@ -76,7 +76,7 @@ clean:
 distclean: clean
 	$(RM) db.sqlite3
 
-$(GIT_HOOKS):
+$(GIT_HOOKS): format
 	@scripts/install-git-hooks
 	@echo
 
