@@ -20,7 +20,7 @@ ENV DB_PATH "/app/data/db.sqlite3"
 WORKDIR /app
 
 RUN apt-get update -y && apt-get install -y libsqlite3-dev && \
-    mkdir /data && touch ${DB_PATH} && chmod 600 ${DB_PATH} && chown -R 1000:1000 /data
+    mkdir -p /app/data && touch ${DB_PATH} && chmod 600 ${DB_PATH} && chown -R 1000:1000 /app/data
 COPY ["static/image", "/app/static/image/"]
 COPY ["static/css_old", "/app/static/css_old/"]
 COPY ["templates", "/app/templates/"]
