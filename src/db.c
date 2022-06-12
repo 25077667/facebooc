@@ -2,12 +2,20 @@
 #include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 static struct sqlite3* DB;
 static void createDB(sqlite3* DB, const char* e);
 
 void initDB() {
-	if(sqlite3_open(getenv("DB_PATH"), &DB)) {
+	const char* db_path = getenv("DB_PATH");
+	if(!db_path) {
+		struct stat buf;
+		if(stat("./data", &buf) == -1)
+			mkdir("./data", 0700);
+		db_path = "./data/db.sqlite3";
+	}
+	if(sqlite3_open(db_path, &DB)) {
 		fprintf(stderr, "error: unable to open DB: %s\n", sqlite3_errmsg(DB));
 		exit(1);
 	}
@@ -66,6 +74,8 @@ sqlite3* get_db(void) {
 }
 
 void db_close() {
-	if(DB)
+	if(DB) {
+		sqlite3_db_cacheflush(DB);
 		sqlite3_close(DB);
+	}
 }

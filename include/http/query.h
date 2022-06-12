@@ -1,9 +1,11 @@
 #ifndef __QUERY_H__
 #define __QUERY_H__
 
-#include "list.h"
+typedef struct Query Query;
 
 // Suppose it is end by '\0'
-Node* query_parser(char* path);
+Query* query_parser(char* path);
+void* query_get(const Query* restrict q, const char* restrict key);
+void query_delete(Query* q);
 
 #endif

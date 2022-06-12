@@ -162,4 +162,5 @@ fail:
 void postDel(Post* post) {
 	bsDel(post->body);
 	free(post);
+	post = NULL;
 }

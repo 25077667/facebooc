@@ -11,13 +11,19 @@ void PPair_delete(PPair* p) {
 }
 
 void SPair_delete(SPair* p) {
+	if(!p)
+		return;
 	free(p->key);
 	free(p->value);
 	free(p);
+	p = NULL;
 }
 
 void SSPair_delete(SSPair* p) {
+	if(!p)
+		return;
 	free(p->key);
 	free(p->value);
 	free(p);
+	p = NULL;
 }

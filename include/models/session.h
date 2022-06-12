@@ -13,7 +13,7 @@ typedef struct Session {
 
 Session* sessionNew(int, int, int, char*);
 Session* sessionGetBySId(sqlite3*, const char*);
-Session* sessionCreate(sqlite3*, char*, char*);
+Session* sessionCreate(sqlite3*, const char*, const char*);
 void sessionDel(Session*);
 
 #endif

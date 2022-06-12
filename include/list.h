@@ -12,14 +12,15 @@ typedef _Bool (*List_op)(void*);
 typedef struct node {
 	struct node* next;
 
-	const void* value;
-	const size_t size;
+	void* value;
 } Node;
 
-Node* insert(const void* value, size_t size, const Node* next);
+Node* insert(const void* restrict value, size_t size, const Node* restrict next);
+Node* insert_move(void* restrict value, const Node* restrict next);
 
 // head will be NULL
-void clear(Node* head);
+// If your value is non-standard type, please free it by yourself
+void clear(Node* head, List_op free_func);
 _Bool listForEach(Node* head, List_op func);
 Node* reverse(Node* head);
 

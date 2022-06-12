@@ -34,4 +34,9 @@ void PPair_delete(PPair* p);
 void SPair_delete(SPair* p);
 void SSPair_delete(SSPair* p);
 
+#define eXpire_pair(key_, value_, type) \
+	&(type) {                           \
+		.key = key_, .value = value_    \
+	}
+
 #endif

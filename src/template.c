@@ -3,30 +3,38 @@
 #include <string.h>
 
 #include "bs.h"
-#include "kv.h"
+#include "hash_map.h"
 #include "template.h"
+
+struct Template {
+	const char* filename;
+	Hash_map* context;
+};
 
 Template* templateNew(const char* filename) {
 	Template* template = malloc(sizeof(Template));
 
 	template->filename = filename;
-	template->context = NULL;
+	template->context = Hash_map_new();
 
 	return template;
 }
 
 void templateDel(Template* template) {
-	if(template->context)
-		kvDelList(template->context);
+	Hash_map_delete(template->context);
 
 	free(template);
 }
 
 void templateSet(Template* template, const char* key, const char* value) {
-	template->context = insert(kvNew(key, value), sizeof(KV), template->context);
+	SPair* p = malloc(sizeof(SPair));
+	p->key = strdup(key);
+	p->value = strdup(value);
+
+	Hash_map_insert_move(template->context, p);
 }
 
-char* templateRender(Template* template) {
+char* templateRender(const Template* template) {
 	FILE* file = fopen(template->filename, "r");
 
 	if(!file) {
@@ -63,7 +71,7 @@ char* templateRender(Template* template) {
 		if(*segment == '{') {
 			rep = true;
 			segment += 1;
-			char* val = kvFindList(template->context, segment);
+			char* val = Hash_map_get(template->context, segment);
 			if(val)
 				bsLCat(&res, val);
 		}
@@ -86,7 +94,7 @@ char* templateRender(Template* template) {
 				segment += 5;
 				char* spc = strchr(segment, ' ');
 				*spc = '\0';
-				char* incBs = kvFindList(template->context, segment);
+				char* incBs = Hash_map_get(template->context, segment);
 
 				if(incBs) {	 // Found
 					segment = spc + 1;

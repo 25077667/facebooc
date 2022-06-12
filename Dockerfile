@@ -16,7 +16,7 @@ RUN make release
 FROM debian:latest
 LABEL Author="zxc25077667@protonmail.com"
 ENV port 8080
-ENV DB_PATH "/data/db.sqlite3"
+ENV DB_PATH "/app/data/db.sqlite3"
 WORKDIR /app
 
 RUN apt-get update -y && apt-get install -y libsqlite3-dev && \

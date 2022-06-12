@@ -2,9 +2,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "http/http.h"
-#include "kv.h"
 #include "request.h"
 #include "utility.h"
 
@@ -141,16 +141,16 @@ fail:
 void requestDel(Request* req) {
 	if(req->path != req->uri)
 		free((char*)req->uri);	// It has a query, uri is splitted from path
-	if(req->path)
-		free((char*)req->path);
-	if(req->queryString)
-		kvDelList((Node*)req->queryString);
-	if(req->postBody)
-		kvDelList((Node*)req->postBody);
-	if(req->headers)
-		kvDelList((Node*)req->headers);
-	if(req->cookies)
-		Cookie_delete((Cookie*)req->cookies);
+
+	free((char*)req->path);
+
+	query_delete((Query*)req->queryString);
+
+	body_delete((Body*)req->postBody);
+
+	header_delete((Header*)req->headers);
+
+	Cookies_delete((Cookies*)req->cookies);
 
 	free(req);
 }

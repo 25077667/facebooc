@@ -1,10 +1,10 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-#include <string.h>
-
+#include "http/body.h"
 #include "http/cookies.h"
-#include "list.h"
+#include "http/header.h"
+#include "http/query.h"
 
 typedef enum Method {
 	OPTIONS,
@@ -24,10 +24,10 @@ typedef struct Request {
 	const char* path;
 	const char* uri;
 
-	const Node* queryString;
-	const Node* postBody;
-	const Cookie* cookies;
-	const Node* headers;
+	const Query* queryString;
+	const Body* postBody;
+	const Cookies* cookies;
+	const Header* headers;
 } Request;
 
 Request* requestNew(char*);
