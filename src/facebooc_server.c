@@ -1,14 +1,18 @@
+#define _DEFAULT_SOURCE
 #include <ctype.h>
+#include <fcntl.h>
 #include <sqlite3.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "bs.h"
 #include "db.h"
 #include "facebooc_server.h"
-#include "kv.h"
+#include "http/cookies.h"
 #include "models/account.h"
 #include "models/connection.h"
 #include "models/like.h"
@@ -21,6 +25,11 @@
 // Facebooc is an directive class of Server
 struct Facebooc {
 	Server* server;
+};
+
+struct Buf_size {
+	void* addr;
+	size_t len;
 };
 
 static Response* home(Request*);
@@ -38,7 +47,7 @@ static Response* static_handler(Request* req);
 static Response* notFound(Request*);  // default route
 
 static inline int get_id(const char* uri);
-static const Account* get_account(const Cookie* c);
+static const Account* get_account(const Cookies* c);
 
 Facebooc* FB_new(const uint16_t port) {
 	Facebooc* s = malloc(sizeof(Facebooc));
@@ -110,6 +119,52 @@ static inline const char* mimeType_mux(const char* path) {
 	return mime_type[i];
 }
 
+// Each entry of this Hash_map is referenced by mmap
+// Don't use free to munmap it
+// Also, not expected to munmap it
+static Hash_map* static_file_table;
+
+static struct Buf_size get_static_file(const char* filename) {
+	struct Buf_size fm = { .addr = NULL, .len = 0 };
+	// Check if it is already in the static_file_table
+	const struct Buf_size* entry = Hash_map_get(static_file_table, filename);
+	if(entry) {	 // Found
+		fm.addr = entry->addr;
+		fm.len = entry->len;
+		goto found;
+	}
+
+	// EXIT ON DIRS
+	struct stat stat_file;
+	if(stat(filename, &stat_file) < 0 || S_ISDIR(stat_file.st_mode))
+		goto fail;
+
+	// EXIT ON NOT FOUND
+	int file = open(filename, O_RDONLY);
+	if(unlikely(file == -1)) {
+		// Not found or error
+		fprintf(stderr, "%s not found\n", filename);
+		goto fail;
+	};
+
+	// Init local fm
+	fm.addr = mmap(NULL, stat_file.st_size, PROT_READ, MAP_PRIVATE, file, 0);
+	fm.len = stat_file.st_size;
+	madvise(fm.addr, stat_file.st_size, MADV_SEQUENTIAL | MADV_WILLNEED | MADV_DONTFORK);
+	close(file);
+
+	// Dup a fm into static_file_table
+	struct Buf_size* copy_fm = malloc(sizeof(struct Buf_size));
+	copy_fm->addr = fm.addr;
+	copy_fm->len = fm.len;
+	SPair p = { .key = (char*)filename, .value = copy_fm };
+	Hash_map_insert_move(static_file_table, &p);
+
+fail:
+found:
+	return fm;
+}
+
 static Response* static_handler(Request* req) {
 	// EXIT ON SHENANIGANS
 	if(strstr(req->uri, "../"))
@@ -117,50 +172,37 @@ static Response* static_handler(Request* req) {
 
 	const char* filename = req->uri + 1;
 
-	// EXIT ON DIRS
-	struct stat sbuff;
-	if(stat(filename, &sbuff) < 0 || S_ISDIR(sbuff.st_mode))
+	// Prepare static_file_table
+	if(unlikely(!static_file_table))
+		static_file_table = Hash_map_new();
+
+	struct Buf_size fm = get_static_file(filename);
+	if(fm.addr == NULL)	 // file not found
 		return NULL;
 
-	// EXIT ON NOT FOUND
-	FILE* file = fopen(filename, "r");
-	if(!file)
-		return NULL;
-
-	// GET LENGTH
-	char lens[25];
-	fseek(file, 0, SEEK_END);
-	size_t len = ftell(file);
-	snprintf(lens, 10, "%ld", (long int)len);
-	rewind(file);
-
-	// SET BODY
 	Response* response = responseNew();
-
-	char* buff = malloc(sizeof(char) * len);
-	(void)!fread(buff, sizeof(char), len, file);
-	responseSetBody(response, bsNewLen(buff, len));
-	fclose(file);
-	free(buff);
+	responseSetBody_data(response, fm.addr, fm.len);
 
 	// MIME TYPE
 	const char* mimeType = mimeType_mux(req->uri);
+	char content_len[11];
+	snprintf(content_len, 11, "%ld", fm.len);
 
 	// RESPOND
 	responseSetStatus(response, OK);
-	responseAddHeader(response, "Content-Type", mimeType);
-	responseAddHeader(response, "Content-Length", lens);
-	responseAddHeader(response, "Cache-Control", "max-age=2592000");
+	responseAddHeader(response, eXpire_pair("Content-Type", (char*)mimeType, SSPair));
+	responseAddHeader(response, eXpire_pair("Content-Length", content_len, SSPair));
+	responseAddHeader(response, eXpire_pair("Cache-Control", "max-age=2592000", SSPair));
 	return response;
 }
 
 // Get sid string from cookies
-static const Account* get_account(const Cookie* c) {
-	// TODO: Use a object pool to reduce malloc times
+static const Account* get_account(const Cookies* c) {
+	// TODO: Use an object pool to reduce malloc times
 	if(unlikely(c == NULL))
 		return NULL;
-	const char* sid = Cookie_get(c, "sid");
-	return accountGetBySId(get_db(), sid);
+	Cookie* cookie = Cookies_get(c, "sid");
+	return accountGetBySId(get_db(), Cookie_get_attr(cookie, VALUE));
 }
 
 static Response* home(Request* req) {
@@ -197,7 +239,7 @@ static Response* dashboard(Request* req) {
 		Account* account = accountGetById(get_db(), post->authorId);
 		bool liked = likeLiked(get_db(), my_acc->id, post->id);
 		const size_t acc_len = strlen(account->name);
-		const size_t post_len = strlen(post->body);
+		const size_t post_len = bsGetLen(post->body);
 
 		char* bbuff = bsNewLen("", strlen(post->body) + 256);
 		snprintf(bbuff, 86 + acc_len + post_len,
@@ -373,7 +415,7 @@ static Response* post(Request* req) {
 	if(unlikely(req->method != POST))
 		goto fail;
 
-	const char* postStr = kvFindList(req->postBody, "post");
+	const char* postStr = body_get(req->postBody, "post");
 
 	if(strlen(postStr) == 0)
 		goto fail;
@@ -397,7 +439,7 @@ static Response* unlike(Request* req) {
 
 	likeDel(likeDelete(get_db(), my_acc->id, post->authorId, post->id));
 
-	if(kvFindList(req->queryString, "r"))
+	if(query_get(req->queryString, "r"))
 		snprintf(redir_to, 32, "/profile/%d/", post->authorId);
 
 fail:
@@ -417,7 +459,7 @@ static Response* like(Request* req) {
 
 	likeDel(likeCreate(get_db(), my_acc->id, post->authorId, post->id));
 
-	if(kvFindList(req->queryString, "r"))
+	if(query_get(req->queryString, "r"))
 		snprintf(redir_to, 32, "/profile/%d/", post->authorId);
 
 fail:
@@ -450,7 +492,7 @@ static Response* search(Request* req) {
 		return responseNewRedirect("/login/");
 	accountDel((Account*)my_acc);
 
-	char* query = kvFindList(req->queryString, "q");
+	const char* query = query_get(req->queryString, "q");
 
 	if(!query)
 		return NULL;
@@ -523,8 +565,8 @@ static Response* login(Request* req) {
 	templateSet(template, "subtitle", "Login");
 
 	if(req->method == POST) {
-		char* username = kvFindList(req->postBody, "username");
-		char* password = kvFindList(req->postBody, "password");
+		const char* username = body_get(req->postBody, "username");
+		const char* password = body_get(req->postBody, "password");
 
 		if(!username) {
 			invalid(template, "usernameError", "Username missing!");
@@ -542,12 +584,17 @@ static Response* login(Request* req) {
 		if(valid) {
 			Session* session = sessionCreate(get_db(), username, password);
 			if(session) {
-				responseSetStatus(response, FOUND);
-				responseAddCookie(response, "sid", session->sessionId, NULL, NULL, 3600 * 24 * 30);
-				responseAddHeader(response, "Location", "/dashboard/");
-				templateDel(template);
+				// Setting cookie
+				Cookies* cookie = Cookies_init("sid", session->sessionId);
+				Cookies_set_expire(cookie, "sid", 3600 * 24 * 30);
+				responseAddCookie(response, cookie);
+
 				sessionDel(session);
-				return response;
+				Cookies_delete(cookie);
+
+				responseSetStatus(response, FOUND);
+				responseAddHeader(response, eXpire_pair("Location", "/dashboard/", SSPair));
+				goto ret;
 			}
 			else {
 				invalid(template, "usernameError", "Invalid username or password.");
@@ -559,20 +606,27 @@ static Response* login(Request* req) {
 	}
 
 	responseSetBody(response, templateRender(template));
+
+ret:
 	templateDel(template);
 	return response;
 }
 
 static Response* logout(Request* req) {
 	const Account* my_acc = get_account(req->cookies);
-	if(unlikely(my_acc == NULL)) {	// It's usually logined
-		accountDel((Account*)my_acc);
+	if(unlikely(!my_acc))  // It's usually logined
 		return responseNewRedirect("/");
-	}
+
+	accountDel((Account*)my_acc);
 
 	Response* response = responseNewRedirect("/");
-	// Reset cookie
-	responseAddCookie(response, "sid", "", NULL, NULL, -1);
+
+	Cookies* cookie = Cookies_init("sid", "");
+	Cookies_set_expire(cookie, "sid", -1);
+
+	responseAddCookie(response, cookie);  // Copy
+	Cookies_delete(cookie);				  // delete
+
 	return response;
 }
 
@@ -592,11 +646,11 @@ static Response* signup(Request* req) {
 
 	if(req->method == POST) {
 		bool valid = true;
-		const char* name = kvFindList(req->postBody, "name");
-		const char* email = kvFindList(req->postBody, "email");
-		const char* username = kvFindList(req->postBody, "username");
-		const char* password = kvFindList(req->postBody, "password");
-		const char* confirmPassword = kvFindList(req->postBody, "confirm-password");
+		const char* name = body_get(req->postBody, "name");
+		const char* email = body_get(req->postBody, "email");
+		const char* username = body_get(req->postBody, "username");
+		const char* password = body_get(req->postBody, "password");
+		const char* confirmPassword = body_get(req->postBody, "confirm-password");
 
 		if(!name) {
 			invalid(template, "nameError", "You must enter your name!");
@@ -656,11 +710,11 @@ static Response* signup(Request* req) {
 			Account* account = accountCreate(get_db(), name, email, username, password);
 
 			if(account) {
-				responseSetStatus(response, FOUND);
-				responseAddHeader(response, "Location", "/login/");
-				templateDel(template);
 				accountDel(account);
-				return response;
+
+				responseSetStatus(response, FOUND);
+				responseAddHeader(response, eXpire_pair("Location", "/login/", SSPair));
+				goto ret;
 			}
 			else {
 				invalid(template, "nameError", "Unexpected error. Please try again later.");
@@ -669,6 +723,7 @@ static Response* signup(Request* req) {
 	}
 
 	responseSetBody(response, templateRender(template));
+ret:
 	templateDel(template);
 	return response;
 }

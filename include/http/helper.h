@@ -1,7 +1,7 @@
 #ifndef __HELPER_HTTP_H__
 #define __HELPER_HTTP_H__
 
-#include "kv.h"
+#include "pair.h"
 #include <stddef.h>
 
 // Using __typeof__ extension by GCC
@@ -23,7 +23,9 @@ void string_view_show(const struct string_view* const);
 void to_lower_case(char* str);
 char* find_first_of(const char* str, const char* delim);
 char* url_decoder(const char* str);
-KV* make_pair(const struct string_view* const key, const struct string_view* const value);
-KV* query_entry(const char* str);
+SPair* make_pair(const struct string_view* const key, const struct string_view* const value);
+SPair* query_entry(const char* str);
+
+char* string_view_dup(const struct string_view* const sv);
 
 #endif

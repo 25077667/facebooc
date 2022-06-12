@@ -3,15 +3,11 @@
 
 #include "list.h"
 
-typedef struct Template {
-	const char* filename;
+typedef struct Template Template;
 
-	Node* context;
-} Template;
-
-Template* templateNew(const char*);
-void templateDel(Template*);
+Template* templateNew(const char* filename);
+void templateDel(Template* t);
 void templateSet(Template* template, const char* key, const char* value);
-char* templateRender(Template*);
+char* templateRender(const Template* t);
 
 #endif

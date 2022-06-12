@@ -23,18 +23,6 @@
 #endif
 #endif
 
-#ifndef container_of_p
-#ifdef __GNUC__
-#define container_of_p(ptr, type, ptr_member)                       \
-	__extension__({                                                 \
-		const __typeof__(((type*)0)->ptr_member) __pmember = (ptr); \
-		(type*)((char*)__pmember - offsetof(type, ptr_member));     \
-	})
-#else
-#define container_of_p(ptr, type, ptr_member) ((type*)((char*)(ptr)-offsetof(type, ptr_member)))
-#endif
-#endif
-
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 

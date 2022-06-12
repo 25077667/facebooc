@@ -108,7 +108,10 @@ static inline _Bool hash_map_set_entry(SPair** entries, size_t cap, const SPair*
 			index = 0;				// At end of entries array, wrap around.
 	}
 
-	entries[index] = (SPair*)p;
+	// Copy p into hash map
+	entries[index] = malloc(sizeof(SPair));
+	((SPair*)(entries[index]))->key = p->key;
+	((SPair*)(entries[index]))->value = p->value;
 	return true;
 }
 

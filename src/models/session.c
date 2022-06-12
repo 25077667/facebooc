@@ -41,7 +41,7 @@ fail:
 	return session;
 }
 
-Session* sessionCreate(sqlite3* DB, char* username, char* password) {
+Session* sessionCreate(sqlite3* DB, const char* username, const char* password) {
 	int aid;
 	char* sid = NULL;
 	Session* session = NULL;
@@ -64,7 +64,7 @@ Session* sessionCreate(sqlite3* DB, char* username, char* password) {
 	if(sqlite3_step(statement) != SQLITE_ROW)
 		goto fail;
 
-	sid = bsRandom(24, username);
+	sid = bsRandom(24, (char*)username);
 	aid = sqlite3_column_int(statement, 0);
 	sqlite3_finalize(statement);
 

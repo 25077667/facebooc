@@ -1,14 +1,16 @@
+#include "response.h"
+#include "bs.h"
+#include "http/header.h"
+#include "utility.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "bs.h"
-#include "kv.h"
-#include "response.h"
-
-const char* STATUSES[5][25] = {
+static const char* STATUSES[6][25] = {
+	{ "" },
 	{ "Continue", "Switching Protocols" },
 	{ "OK", "Created", "Accepted", "Non-Authoritative Information", "No Content", "Reset Content",
 	  "Partial Content" },
@@ -39,19 +41,30 @@ const char* STATUSES[5][25] = {
 	  "Gateway Timeout", "HTTP Version Not Supported" },
 };
 
+// Refer to https://datatracker.ietf.org/doc/html/rfc2616
+// Section 6
+struct Response {
+	Status status;
+	Header* header;
+	size_t body_len;
+	const char* body;
+};
+
 Response* responseNew() {
 	Response* response = malloc(sizeof(Response));
 	response->status = OK;
-	response->headers = NULL;
+	response->header = header_new();
+	response->body_len = 0;
 	response->body = NULL;
 	return response;
 }
 
 Response* responseNewRedirect(const char* location) {
 	Response* response = responseNew();
+	const SSPair p = { .key = "Location", .value = (char*)location };
 
 	responseSetStatus(response, FOUND);
-	responseAddHeader(response, "Location", location);
+	responseAddHeader(response, &p);
 
 	return response;
 }
@@ -60,90 +73,95 @@ void responseSetStatus(Response* response, Status status) {
 	response->status = status;
 }
 
-void responseSetBody(Response* response, char* body) {
-	response->body = body;
+void responseSetBody(Response* restrict response, const char* restrict ctx) {
+	free((void*)response->body);
+	response->body = strdup(ctx);
+	response->body_len = strlen(ctx);
 }
 
-void responseAddCookie(Response* response, char* key, char* value, char* domain, char* path,
-					   int duration) {
-	char cbuff[512];
-	char sbuff[100];
-	time_t t = time(NULL) + duration;
+void responseSetBody_move(Response* restrict r, char* restrict ctx) {
+	free((void*)r->body);
 
-	strftime(sbuff, 100, "%c GMT", gmtime(&t));
-
-	const size_t key_len = strlen(key);
-	const size_t val_len = strlen(value);
-	const size_t sbuff_len = strlen(sbuff);
-
-	snprintf(cbuff, 12 + key_len + val_len + sbuff_len, "%s=%s; Expires=%s", key, value, sbuff);
-
-	if(domain) {
-		const size_t domain_len = strlen(domain);
-		snprintf(sbuff, domain_len + 10, "; Domain=%s", domain);
-		strcat(cbuff, sbuff);
-	}
-
-	if(path) {
-		const size_t path_len = strlen(path);
-		snprintf(sbuff, 8 + path_len, "; Path=%s", path);
-		strcat(cbuff, sbuff);
-	}
-	else {
-		strcat(cbuff, "; Path=/");
-	}
-
-	responseAddHeader(response, "Set-Cookie", cbuff);
+	r->body = ctx;
+	r->body_len = strlen(r->body);
+	ctx = NULL;
 }
 
-void responseAddHeader(Response* response, const char* key, const char* value) {
-	response->headers = insert(kvNew(key, value), sizeof(KV), response->headers);
+void responseSetBody_data(Response* restrict r, const void* restrict ctx, size_t len) {
+	free((void*)r->body);
+
+	r->body = memdup(ctx, len);
+	r->body_len = len;
+}
+
+void responseSetBody_data_move(Response* restrict r, void* restrict ctx, size_t len) {
+	free((void*)r->body);
+
+	r->body = ctx;
+	r->body_len = len;
+	ctx = NULL;
+}
+
+int response_get_status(const Response* r) {
+	if(unlikely(!r))
+		return BAD_REQUEST;
+
+	return r->status;
+}
+
+void responseAddCookie(Response* restrict r, const Cookies* restrict c) {
+	SSPair* p_ = malloc(sizeof(SSPair));
+	p_->key = strdup("Set-Cookie");
+	p_->value = Cookie_to_string(c);
+
+	responseAddHeader_move(r, p_);
+}
+
+void responseAddHeader(Response* restrict r, const SSPair* restrict p) {
+	header_insert(r->header, p);
+}
+
+void responseAddHeader_move(Response* restrict r, SSPair* restrict p) {
+	header_insert_move(r->header, p);
+	p = NULL;
 }
 
 void responseDel(Response* response) {
-	if(response->headers)
-		kvDelList(response->headers);
-	if(response->body)
-		bsDel(response->body);
+	if(unlikely(!response))
+		return;
 
+	header_delete(response->header);
+	free((void*)response->body);
 	free(response);
+	response = NULL;
 }
 
-void responseWrite(Response* response, int fd) {
-	Node* buffer = NULL;
-	Node* header;
+//   RFC 2616, Section 6 Response
+//   Response            = Status-Line              ; Section 6.1
+//                        *(( general-header        ; Section 4.5
+//                         | response-header        ; Section 6.2
+//                         | entity-header ) CRLF)  ; Section 7.1
+//                        CRLF
+//                        [ message-body ]          ; Section 7.2
+void responseWrite(const Response* r, int fd) {
+	if(unlikely(!r))
+		return;
 
-	char sbuffer[2048];
+	// Send Status-Line
+	char status_line[128];
+	snprintf(status_line, 128, "HTTP/1.0 %d %s\r\n", r->status,
+			 STATUSES[r->status / 100][r->status % 100]);
+	send(fd, status_line, strlen(status_line), 0);
 
-	// HEADERS
-	header = response->headers;
+	// Send header
+	char* header = header_to_string(r->header);
+	if(header)
+		send(fd, header, strlen(header), 0);
+	free(header);
 
-	while(header) {
-		const size_t key_len = strlen(((KV*)header->value)->key);
-		const size_t val_len = strlen(((KV*)header->value)->value);
-		snprintf(sbuffer, 5 + key_len + val_len, "%s: %s\r\n", ((KV*)header->value)->key,
-				 ((KV*)header->value)->value);
-
-		buffer = insert(sbuffer, sizeof(char) * (strlen(sbuffer) + 1), buffer);
-		header = (Node*)header->next;
-	}
-
-	// STATUS
-	const size_t status_len = strlen(STATUSES[response->status / 100 - 1][response->status % 100]);
-	snprintf(sbuffer, 13 + 10 + status_len, "HTTP/1.0 %d %s\r\n", response->status,
-			 STATUSES[response->status / 100 - 1][response->status % 100]);
-
-	buffer = insert(sbuffer, sizeof(char) * (strlen(sbuffer) + 1), buffer);
-
-	// OUTPUT
-	while(buffer) {
-		send(fd, buffer->value, strlen(buffer->value), 0);
-
-		buffer = (Node*)buffer->next;
-	}
-
+	// Header and body seperator
 	send(fd, "\r\n", 2, 0);
 
-	if(response->body)
-		send(fd, response->body, bsGetLen(response->body), 0);
+	// Send body
+	send(fd, r->body, r->body_len, 0);
 }

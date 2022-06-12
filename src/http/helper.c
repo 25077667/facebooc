@@ -84,7 +84,7 @@ static void urldecode2(char* dst, const char* src) {
 	*dst++ = '\0';
 }
 
-static inline char* string_view_dup(const struct string_view* const sv) {
+char* string_view_dup(const struct string_view* const sv) {
 	char* copy = NULL;
 	if(sv->size != -1) {
 		copy = malloc(sv->size + 1);
@@ -151,8 +151,8 @@ char* url_decoder(const char* str) {
 	return new_url;
 }
 
-KV* make_pair(const struct string_view* const key, const struct string_view* const value) {
-	KV* entry = malloc(sizeof(KV));
+SPair* make_pair(const struct string_view* const key, const struct string_view* const value) {
+	SPair* entry = malloc(sizeof(SPair));
 	entry->key = string_view_dup(key);
 	entry->value = string_view_dup(value);
 
@@ -160,7 +160,7 @@ KV* make_pair(const struct string_view* const key, const struct string_view* con
 }
 
 // Case sensitive
-KV* query_entry(const char* str) {
+SPair* query_entry(const char* str) {
 	const char* seperator = find_first_of(str, "=");
 	struct string_view key = { .begin = str, .end = seperator, .size = seperator - str };
 	struct string_view value = { .begin = seperator + 1,

@@ -16,11 +16,11 @@ RUN make release
 FROM debian:latest
 LABEL Author="zxc25077667@protonmail.com"
 ENV port 8080
-ENV DB_PATH "/data/db.sqlite3"
+ENV DB_PATH "/app/data/db.sqlite3"
 WORKDIR /app
 
 RUN apt-get update -y && apt-get install -y libsqlite3-dev && \
-    mkdir /data && touch ${DB_PATH} && chmod 600 ${DB_PATH} && chown -R 1000:1000 /data
+    mkdir -p /app/data && touch ${DB_PATH} && chmod 600 ${DB_PATH} && chown -R 1000:1000 /data
 COPY ["static/image", "/app/static/image/"]
 COPY ["static/css_old", "/app/static/css_old/"]
 COPY ["templates", "/app/templates/"]

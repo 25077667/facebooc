@@ -27,7 +27,7 @@ static inline void pop_log(const struct sockaddr_in* addr, const char* method, c
 	time_t t = time(NULL);
 	char timebuff[100];
 	strftime(timebuff, sizeof(timebuff), "%c", localtime(&t));
-	fprintf(stdout, "%s %s %s %s %d\n", timebuff, inet_ntoa(addr->sin_addr), method, path, status);
+	fprintf(stderr, "%s %s %s %s %d\n", timebuff, inet_ntoa(addr->sin_addr), method, path, status);
 }
 
 Server* serverNew(const uint16_t port) {
@@ -144,8 +144,10 @@ static inline void handle(Server* server, int fd, struct sockaddr_in* addr) {
 				handler_func = &server->default_callback;
 
 			Response* response = (*handler_func)(req);
+			if(unlikely(!response))	 // Return NULL, goto not found
+				response = server->default_callback(req);
 
-			pop_log(addr, METHODS[req->method], req->path, response->status);
+			pop_log(addr, METHODS[req->method], req->path, response_get_status(response));
 
 			responseWrite(response, fd);
 			responseDel(response);

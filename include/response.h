@@ -1,6 +1,7 @@
 #ifndef RESPONSE_H
 #define RESPONSE_H
 
+#include "http/cookies.h"
 #include "list.h"
 
 typedef enum Status {
@@ -51,22 +52,26 @@ typedef enum Status {
 	HTTP_VERSION_NOT_SUPPORTED
 } Status;
 
-typedef struct Response {
-	Status status;
-
-	Node* headers;
-
-	char* body;
-} Response;
+typedef struct Response Response;
 
 Response* responseNew();
-Response* responseNewRedirect(const char*);
-Response* responseNewRedirectWithCookie(char*);
-void responseSetStatus(Response*, Status);
-void responseSetBody(Response*, char*);
-void responseAddCookie(Response*, char*, char*, char*, char*, int);
-void responseAddHeader(Response*, const char*, const char*);
-void responseDel(Response*);
-void responseWrite(Response*, int);
+Response* responseNewRedirect(const char* location);
+void responseSetStatus(Response* r, Status);
+void responseSetBody(Response* restrict r, const char* restrict ctx);
+void responseSetBody_move(Response* restrict r, char* restrict ctx);
 
+void responseSetBody_data(Response* restrict r, const void* restrict ctx, size_t len);
+void responseSetBody_data_move(Response* restrict r, void* restrict ctx, size_t len);
+
+int response_get_status(const Response* r);
+
+// Only add the first cookie entry, and ignore any other cookies
+void responseAddCookie(Response* restrict r, const Cookies* restrict cookie_entry);
+void responseAddHeader(Response* restrict r, const SSPair* restrict p);
+void responseAddHeader_move(Response* restrict r, SSPair* restrict p);
+void responseDel(Response* r);
+
+void responseWrite(const Response* r, int fd);
+
+// TODO: splice, sendfile supporting
 #endif
