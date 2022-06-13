@@ -32,8 +32,10 @@
 
 int string_hash(const char* s);
 int obj_hash(const void* data, size_t size);
-// trigger the address sanitizer
+
+#ifdef DEBUG
 void mem_canary_alert(const char* msg);
+#endif
 
 void* memdup(const void* mem, size_t size);
 

@@ -26,6 +26,7 @@ int obj_hash(const void* data, size_t size) {
 	return hash;
 }
 
+#ifdef DEBUG
 void mem_canary_alert(const char* msg) {
 	puts(msg);
 #ifdef __SANITIZE_ADDRESS__
@@ -50,6 +51,7 @@ void mem_canary_alert(const char* msg) {
 	free(symbols);
 #endif
 }
+#endif
 
 void* memdup(const void* mem, size_t size) {
 	void* out = malloc(size);

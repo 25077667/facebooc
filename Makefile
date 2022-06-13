@@ -1,5 +1,11 @@
-CFLAGS = -std=c11 -Wall -Wextra -Werror -g -I include
+CFLAGS = -std=c11 -Wall -Wextra -Werror -I include
 LDFLAGS = -lsqlite3 -lpthread -ldl -lm
+
+ifeq ($(DEBUG), off)
+DEBUG_FLAG =
+else
+DEBUG_FLAG = -DDEBUG -g
+endif
 
 # strtok_r is provided by POSIX.1c-1995 and POSIX.1i-1995, however, with
 # the POSIX_C_SOURCE=1 on Mac OS X is corresponding to the version of
@@ -29,7 +35,7 @@ css_dir = static/css/
 deps := $(OBJS:%.o=%.o.d)
 
 src/%.o: src/%.c
-	$(CC) $(CFLAGS) -DDEBUG -o $@ -MMD -MF $@.d -c $<
+	$(CC) $(CFLAGS) $(DEBUG_FLAG) -o $@ -MMD -MF $@.d -c $<
 
 all: $(GIT_HOOKS) $(EXEC) main.c
 
@@ -60,7 +66,12 @@ test: $(TEST_UNIT_OBJ)
 	@tests/driver.py
 	@echo done
 
-release: before_release html-updater gen-css
+_debud_off:
+	@$(MAKE) _actual_release DEBUG=off
+
+_actual_release: before_release html-updater gen-css
+
+release: _debud_off
 
 format:
 	@echo start formatting...
