@@ -1,10 +1,8 @@
 CFLAGS = -std=gnu11 -Wall -Wextra -Werror -I
-LDFLAGS = -lsqlite3 -lpthread -ldl -lm -lasan -lc
+LDFLAGS = -lsqlite3 -lpthread -ldl -lm -lc
 INCLUDE = include
 
 export CFLAGS LDFLAGS DEBUG
-vpath %.h include
-
 GIT_HOOKS := .git/hooks/applied
 
 OUT_DIR = bin
@@ -17,7 +15,8 @@ all: $(GIT_HOOKS) $(EXEC) main.c
 
 $(EXEC): $(OBJS) main.c
 	mkdir -p $(OUT_DIR)
-	$(CC) $(CFLAGS) $(DEBUG) -o $@ main.c $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(DEBUG) $(RELEASE) \
+	-o $@ main.c $(OBJS) $(LDFLAGS)
 
 $(OBJS): $(SRC)
 	@echo $(OBJS)
@@ -58,6 +57,8 @@ $(GIT_HOOKS): format
 
 ifneq "$(MAKECMDGOALS)" "release"
 DEBUG = -DDEBUG -g -fsanitize=address
+LDFLAGS += -lasan
 else
-DEBUG = -O3 -s
+DEBUG =
+RELEASE = -O3 -s -flto
 endif

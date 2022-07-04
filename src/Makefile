@@ -12,13 +12,10 @@ DEP = $(SRC:%.c=%.d)
 FACEBOOC.a = facebooc.a
 
 DIRS = $(shell ls -d ./*/ | sed 's,./\(.*\)/,\1,')
-SUBLIB = $(shell echo $(DIRS) | tr ' ' '\n' | sed 's,\(.*\),\1/\1.a,')
+SUBLIB = $(patsubst %.c,%.o, $(shell find ./*/ -type f -name "*.c"))
 INCLUDE = ../include
 
-all: $(FACEBOOC.a)
-
-$(FACEBOOC.a): $(SUBLIB) $(OBJS)
-	$(LD) -o $@ $(LDFLAGS) $^
+all: $(SUBLIB) $(OBJS)
 
 ./%.o: ./%.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(DEBUG) -c -MMD -MF $*.d $<

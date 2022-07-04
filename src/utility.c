@@ -29,8 +29,8 @@ int obj_hash(const void* data, size_t size) {
 void mem_canary_alert(const char* msg) {
 	puts(msg);
 #ifdef __SANITIZE_ADDRESS__
-	const char* canary = NULL;
-	*canary;
+	char* canary = NULL;
+	*canary = 0;
 #else
 	void* buffer[64];
 	char** symbols;
