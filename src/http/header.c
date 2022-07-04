@@ -1,5 +1,6 @@
-#include "http/header.h"
-#include "http/helper.h"
+#include "header.h"
+#include "helper.h"
+
 #include "list.h"
 #include "utility.h"
 #include <assert.h>

@@ -1,6 +1,7 @@
-#include "http/body.h"
-#include "http/helper.h"
-#include "http/query.h"
+#include "body.h"
+#include "helper.h"
+#include "query.h"
+
 #include "list.h"
 #include "utility.h"
 #include <assert.h>

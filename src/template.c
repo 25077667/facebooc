@@ -13,15 +13,10 @@
 #include "template.h"
 #include "utility.h"
 
-int DEFAULT_FRONEN_ENTRIES = 48;
+int DEFAULT_FROZEN_ENTRIES = 48;
 int DEFAULT_PLACEHOLDER_ENTRIES = 64;
 int DEFAULT_PH_PAGE_NUM = 2;
 int DEFAULT_CTX_PAGE_NUM = 4;
-
-static bool BO_NOTHING(void* p) {
-	(void)p;
-	return true;
-}
 
 struct F_mem {
 	size_t buf_len;
@@ -198,7 +193,7 @@ void MB_concat_resize(Mmapped_buffer* dst, const Mmapped_buffer* src) {
 static void TI_new__(Template_internal* t) {
 	t = malloc(sizeof(Template_internal));
 
-	t->frozen_ctx_len = DEFAULT_FRONEN_ENTRIES;
+	t->frozen_ctx_len = DEFAULT_FROZEN_ENTRIES;
 	t->frozen_ctx = calloc(t->frozen_ctx_len, sizeof(struct string_view));
 
 	t->placeholder_map = Hash_map_new();
