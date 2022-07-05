@@ -22,7 +22,8 @@ $(OBJS): $(SRC)
 	@echo $(OBJS)
 	$(MAKE) -C src
 
-test: $(OBJS) tests/%.c
+TEST_FILES = $(shell find tests/ -type f -name "*.c")
+test: $(OBJS) $(TEST_FILES) 
 	$(MAKE) -C tests $@
 
 static:
