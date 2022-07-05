@@ -1,5 +1,6 @@
-#include "http/cookies.h"
-#include "http/helper.h"
+#include "cookies.h"
+#include "helper.h"
+
 #include "list.h"
 #include "pair.h"
 #include "utility.h"

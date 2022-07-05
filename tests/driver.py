@@ -8,7 +8,7 @@ def get_all_units() -> list():
     cur_name = os.getcwd()
     for root, _, files in os.walk("./tests/", topdown=False):
         for f in files:
-            if(re.search("^.*.o$", f)):
+            if(re.search("^.*\.o$", f)):
                 fullpath = cur_name + root[1:] + "/" + f
                 l.append(fullpath)
     return l

@@ -1,7 +1,7 @@
 #ifndef __BODY_HTTP_H__
 #define __BODY_HTTP_H__
 
-#include "http/header.h"
+#include "header.h"
 #include "pair.h"
 typedef struct Body Body;
 

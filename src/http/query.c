@@ -1,5 +1,6 @@
-#include "http/query.h"
-#include "http/helper.h"
+#include "query.h"
+#include "helper.h"
+
 #include "list.h"
 #include "pair.h"
 #include "utility.h"

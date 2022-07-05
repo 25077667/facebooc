@@ -1,7 +1,7 @@
 #ifndef __COOKIES_H__
 #define __COOKIES_H__
 
-#include "http/header.h"
+#include "header.h"
 #include "pair.h"
 #include <stdbool.h>
 
