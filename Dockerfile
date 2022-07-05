@@ -5,12 +5,7 @@ WORKDIR /app
 RUN apt-get update -y && \
     apt-get install -y libsqlite3-dev \
     build-essential sassc
-COPY ["Makefile", "main.c", "/app/"]
-COPY ["src", "/app/src/"]
-COPY ["include", "/app/include/"]
-COPY ["scripts","/app/scripts"]
-COPY ["templates", "/app/templates/"]
-COPY ["static/scss/", "/app/static/scss"]
+COPY . .
 RUN make release
 
 FROM alpine:latest
@@ -22,7 +17,6 @@ WORKDIR /app
 RUN apk add sqlite-dev libc6-compat --no-cache && \
     mkdir -p /app/data && touch ${DB_PATH} && chmod 600 ${DB_PATH} && chown -R 1000:1000 /app/data
 COPY ["static/image", "/app/static/image/"]
-COPY ["static/css_old", "/app/static/css_old/"]
 COPY ["templates", "/app/templates/"]
 
 COPY --from=build --chown=1000:1000 /app/bin/facebooc /app/facebooc

@@ -10,6 +10,7 @@ EXEC = $(OUT_DIR)/facebooc
 SRC = $(shell find src/ -type f -name "*.[ch]") \
 	$(shell find include/ -type f -name "*.[ch]")
 OBJS = $(patsubst %.c,%.o, $(filter %.c, $(SRC)))
+STATICS = static/css/main.css templates/version.html
 
 all: $(GIT_HOOKS) $(EXEC) main.c
 
@@ -26,14 +27,14 @@ TEST_FILES = $(shell find tests/ -type f -name "*.c")
 test: $(OBJS) $(TEST_FILES) 
 	$(MAKE) -C tests $@
 
-static:
+$(STATICS):
 	$(MAKE) -C static
 
-run: $(EXEC) static
+run: $(EXEC) $(STATICS)
 	@echo "Starting Facebooc service..."
 	@./$(EXEC) $(port)
 
-release: $(EXEC) static
+release: $(EXEC) $(STATICS)
 
 format:
 	@echo start formatting...

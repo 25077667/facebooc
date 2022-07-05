@@ -1,0 +1,9 @@
+.ci/
+deploy_updater/
+docker-compose.yml
+Dockerfile
+.dockerignore
+.git/
+.github/
+LICENSE
+README.md
