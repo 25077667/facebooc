@@ -13,7 +13,7 @@
 // It's a list of SPairs
 // TODO: Use an array of SPairs and link them together to make the cache more friendly
 struct Header {
-	Node* head;
+	List* head;
 };
 
 #define SSPair(node) ((SSPair*)node->value)
@@ -98,7 +98,7 @@ void* header_get(const Header* restrict h, const char* restrict key) {
 	if(unlikely(!h || !key || !*key))
 		return NULL;
 
-	Node* cur = h->head;
+	List* cur = h->head;
 	while(cur && strcmp(SSPair(cur)->key, key))
 		cur = cur->next;
 
@@ -137,7 +137,7 @@ char* header_to_string(const Header* h) {
 	char* sbuf = malloc(RESP_SIZE);
 	int index = 0;
 
-	Node* entry = h->head;
+	List* entry = h->head;
 	while(entry) {
 		const char* key = SSPair(entry)->key;
 		const char* value = SSPair(entry)->value;

@@ -76,13 +76,13 @@ fail:
 	return post;
 }
 
-Node* postGetLatest(sqlite3* DB, int accountId, int page) {
+List* postGetLatest(sqlite3* DB, int accountId, int page) {
 	if(accountId == -1)
 		return NULL;
 
 	int rc;
 	Post* post = NULL;
-	Node* posts = NULL;
+	List* posts = NULL;
 	sqlite3_stmt* statement = NULL;
 
 	rc = sqlite3_prepare_v2(DB,
@@ -115,13 +115,13 @@ fail:
 	return posts;
 }
 
-Node* postGetLatestGraph(sqlite3* DB, int accountId, int page) {
+List* postGetLatestGraph(sqlite3* DB, int accountId, int page) {
 	if(accountId == -1)
 		return NULL;
 
 	int rc;
 	Post* post = NULL;
-	Node* posts = NULL;
+	List* posts = NULL;
 	sqlite3_stmt* statement;
 
 	rc = sqlite3_prepare_v2(DB,

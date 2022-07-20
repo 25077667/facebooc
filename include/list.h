@@ -13,15 +13,15 @@ typedef struct node {
 	struct node* next;
 
 	void* value;
-} Node;
+} List;
 
-Node* insert(const void* restrict value, size_t size, const Node* restrict next);
-Node* insert_move(void* restrict value, const Node* restrict next);
+List* insert(const void* restrict value, size_t size, const List* restrict next);
+List* insert_move(void* restrict value, const List* restrict next);
 
 // head will be NULL
 // If your value is non-standard type, please free it by yourself
-void clear(Node* head, List_op free_func);
-_Bool listForEach(Node* head, List_op func);
-Node* reverse(Node* head);
+void clear(List* head, List_op free_func);
+_Bool listForEach(List* head, List_op func);
+List* reverse(List* head);
 
 #endif

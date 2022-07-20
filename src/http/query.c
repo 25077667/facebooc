@@ -1,9 +1,10 @@
 #include "query.h"
 #include "helper.h"
-
 #include "list.h"
 #include "pair.h"
+#include "string_view.h"
 #include "utility.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -15,7 +16,7 @@
 // It's a list of SPairs
 // TODO: Use an array of SPairs and link them together to make the cache more friendly
 struct Query {
-	Node* head;
+	List* head;
 };
 
 #define SPAIR(node) ((SPair*)node->value)
@@ -30,7 +31,7 @@ Query* query_parser(char* buffer) {
 		}
 
 		// Check if it have '='
-		if(strchr(buffer, '=')) {  // transfter url encoding
+		if(strchr(buffer, '=')) {  // transfer url encoding
 			char* decoded = url_decoder(buffer);
 			SPair* entry = query_entry(decoded);
 			q->head = insert_move(entry, q->head);
@@ -47,7 +48,7 @@ void* query_get(const Query* restrict q, const char* restrict key) {
 	if(unlikely(!q || !key || !*key))
 		return NULL;
 
-	Node* cur = q->head;
+	List* cur = q->head;
 	while(cur && strcmp(SPAIR(cur)->key, key))
 		cur = cur->next;
 

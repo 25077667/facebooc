@@ -228,7 +228,7 @@ static Response* dashboard(Request* req) {
 	if(unlikely(my_acc == NULL))
 		return NULL;
 
-	Node* postCell = postGetLatestGraph(get_db(), my_acc->id, 0);
+	List* postCell = postGetLatestGraph(get_db(), my_acc->id, 0);
 	char* res = NULL;
 	if(postCell)
 		res = bsNew("<ul class=\"posts\">");
@@ -271,7 +271,7 @@ static Response* dashboard(Request* req) {
 
 		bsDel(bbuff);
 		postDel(post);
-		Node* postPCell = postCell;
+		List* postPCell = postCell;
 		postCell = postCell->next;
 
 		free(postPCell);
@@ -337,8 +337,8 @@ static Response* profile(Request* req) {
 	}
 	connectionDel(connection);
 
-	Node* postPCell = NULL;
-	Node* postCell = postGetLatest(get_db(), acc2->id, 0);
+	List* postPCell = NULL;
+	List* postCell = postGetLatest(get_db(), acc2->id, 0);
 
 	char* res = NULL;
 	if(postCell)
@@ -373,7 +373,7 @@ static Response* profile(Request* req) {
 		bsDel(bbuff);
 		postDel(post);
 		postPCell = postCell;
-		postCell = (Node*)postCell->next;
+		postCell = (List*)postCell->next;
 
 		free(postPCell);
 	}
@@ -500,12 +500,12 @@ static Response* search(Request* req) {
 	char* res = NULL;
 	char sbuff[1024];
 
-	Node* accountCell = accountSearch(get_db(), query, 0);
+	List* accountCell = accountSearch(get_db(), query, 0);
 	if(accountCell)
 		res = bsNew("<ul class=\"search-results\">");
 
 	Account* account = NULL;
-	Node* accountPCell = NULL;
+	List* accountPCell = NULL;
 
 	while(accountCell) {
 		account = (Account*)accountCell->value;
@@ -520,7 +520,7 @@ static Response* search(Request* req) {
 
 		accountDel(account);
 		accountPCell = accountCell;
-		accountCell = (Node*)accountCell->next;
+		accountCell = (List*)accountCell->next;
 
 		free(accountPCell);
 	}

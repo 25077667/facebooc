@@ -154,13 +154,13 @@ fail:
 	return account;
 }
 
-Node* accountSearch(sqlite3* DB, const char* query, int page) {
+List* accountSearch(sqlite3* DB, const char* query, int page) {
 	if(!query)
 		return NULL;
 
 	int rc;
 	Account* account = NULL;
-	Node* accounts = NULL;
+	List* accounts = NULL;
 	sqlite3_stmt* statement;
 
 	rc = sqlite3_prepare_v2(DB,

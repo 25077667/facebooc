@@ -14,7 +14,7 @@
 // It's a list of SPairs
 // TODO: Use an array of SPairs and link them together to make the cache more friendly
 struct Body {
-	Node* head;
+	List* head;
 };
 
 #define SPAIR(node) ((SPair*)node->value)

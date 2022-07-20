@@ -1,9 +1,10 @@
 #include "cookies.h"
 #include "helper.h"
-
 #include "list.h"
 #include "pair.h"
+#include "string_view.h"
 #include "utility.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +41,7 @@ typedef struct __attribute__((__packed__)) Cookie {
 typedef Cookie Cookie_to_string_template__;
 
 struct Cookies {
-	Node* dict;
+	List* dict;
 };
 
 Cookies* Cookies_new(void) {
@@ -119,22 +120,22 @@ Cookies* Cookies_init(const char* key, const char* value) {
 	return Cookies_insert(Cookies_new(), key, value);
 }
 
-#define Node_to_Cookie(entry) ((Cookie*)((entry)->value))
+#define List_to_Cookie(entry) ((Cookie*)((entry)->value))
 
 Cookie* Cookies_get(const Cookies* c, const char* key) {
 	if(unlikely(!c || !key))
 		return NULL;
 
-	Node* entry = c->dict;
+	List* entry = c->dict;
 	while(entry) {
-		const char* entry_key = Node_to_Cookie(entry)->key;
+		const char* entry_key = List_to_Cookie(entry)->key;
 		if(strcmp(key, entry_key)) {  // Key is not matched
 			entry = entry->next;
 			continue;
 		}
 
 		// Is found the key
-		return Node_to_Cookie(entry);
+		return List_to_Cookie(entry);
 	}
 	return NULL;
 }
@@ -173,7 +174,7 @@ Cookies* cookies_parser(const Header* header) {
 			cookies->dict = insert_move(c, cookies->dict);
 			free(decoded);
 		}
-		str += strlen(str) + 1;
+		str += strlen(str);
 	}
 
 	return cookies;
@@ -200,7 +201,7 @@ char* Cookie_to_string(const Cookies* c) {
 		return NULL;
 
 	// Suppose there is only one cookie,
-	const Cookie* cur_c = Node_to_Cookie(c->dict);	// Aliasing
+	const Cookie* cur_c = List_to_Cookie(c->dict);	// Aliasing
 	const Cookie_to_string_template__ t = {
 		.key = cur_c->key,
 		.value = cur_c->value,
@@ -239,9 +240,9 @@ void Cookies_print(const Cookies* c) {
 	if(!c || !c->dict)
 		return;
 
-	Node* entry = c->dict;
+	List* entry = c->dict;
 	while(entry) {
-		Cookie* cur_c = Node_to_Cookie(entry);
+		Cookie* cur_c = List_to_Cookie(entry);
 		const Cookie_to_string_template__ t = {
 			.key = cur_c->key,
 			.value = cur_c->value,

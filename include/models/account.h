@@ -33,7 +33,7 @@ Account* accountGetBySId(sqlite3* db, const char* sid);
 //
 // Detail: @page is the OFFSET you had viewed, because of the performance issue
 // 		   we search a page (10 entries) once.
-Node* accountSearch(sqlite3* db, const char* what_to_search, int page);
+List* accountSearch(sqlite3* db, const char* what_to_search, int page);
 // Check if username is taken
 bool accountCheckUsername(sqlite3* db, const char* username);
 // Check if email is taken

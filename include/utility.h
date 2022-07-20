@@ -1,5 +1,8 @@
 #ifndef __UTILITY_H__
 #define __UTILITY_H__
+#include "pair.h"
+#include "string_view.h"
+
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -42,5 +45,11 @@ void* memdup(const void* mem, size_t size);
 // Copy "^%s/.*$" which %s from src to dst
 // %s will not contain any '/'
 void fetch_dir(char* restrict dst, const char* restrict src);
+
+void to_lower_case(char* str);
+
+char* find_first_of(const char* str, const char* delim);
+
+SPair* make_pair(const struct string_view* const key, const struct string_view* const value);
 
 #endif

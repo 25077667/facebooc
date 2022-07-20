@@ -18,8 +18,8 @@ typedef struct Post {
 Post* postNew(int, int, int, const char*);
 Post* postCreate(sqlite3*, int uid, const char* body);
 Post* postGetById(sqlite3*, int);
-Node* postGetLatest(sqlite3*, int, int);
-Node* postGetLatestGraph(sqlite3*, int, int);
+List* postGetLatest(sqlite3*, int, int);
+List* postGetLatestGraph(sqlite3*, int, int);
 void postDel(Post*);
 
 #endif
