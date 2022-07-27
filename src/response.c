@@ -109,7 +109,7 @@ int response_get_status(const Response* r) {
 	return r->status;
 }
 
-void responseAddCookie(Response* restrict r, const Cookies* restrict c) {
+void responseAddCookie(Response* restrict r, const Cookie* restrict c) {
 	SSPair* p_ = malloc(sizeof(SSPair));
 	p_->key = strdup("Set-Cookie");
 	p_->value = Cookie_to_string(c);

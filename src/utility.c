@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static inline int max(int a, int b);
 static inline void badCharHeuristic(const char* str, size_t size, char badchar[256]);
 static char* boyer_moore(const char* txt, const char* pat);
 
@@ -85,10 +84,6 @@ char* find_first_of(const char* str, const char* delim) {
 		return boyer_moore(str, delim);
 	else
 		return NULL;
-}
-
-static inline int max(int a, int b) {
-	return a > b ? a : b;
 }
 
 static inline void badCharHeuristic(const char* str, size_t size, char badchar[256]) {

@@ -6,6 +6,9 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+// Function is a pointer which takes a pointer and returns an int
+typedef int (*Func)(void*);
+
 /**
  * container_of() - Calculate address of object that contains address ptr
  * @ptr: pointer to member variable
@@ -28,6 +31,12 @@
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+
+// TODO: Make this mixmax macro more robust
+#define min(x, y) ((x) < (y) ? (x) : (y))
+#define max(x, y) ((x) < (y) ? (y) : (x))
+
+#define ARR_LEN(arr) (sizeof(arr) / sizeof(*arr))
 
 // Using __typeof__ extension by GCC
 // ! Be careful, the type of value might not be deduced as you expect

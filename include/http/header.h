@@ -12,10 +12,14 @@ Header* header_parser(char* restrict buffer, size_t* restrict offset);
 Header* header_new();
 void header_insert(Header* restrict h, const SSPair* restrict p);
 void header_insert_move(Header* restrict h, SSPair* restrict p);
-void* header_get(const Header* restrict h, const char* restrict key);
+const char* header_get(const Header* restrict h, const char* restrict key);
 void header_delete(Header* h);
 
 // copy header context to string
 char* header_to_string(const Header*);
+
+#ifdef DEBUG
+void Header_print(const Header* h);
+#endif
 
 #endif

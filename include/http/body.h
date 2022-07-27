@@ -5,12 +5,14 @@
 #include "pair.h"
 typedef struct Body Body;
 
+// We need header's information to select how do we parse the body
 Body* body_parser(const Header* restrict header, char* restrict buffer);
 
-Body* body_new();
-Body* body_insert(Body* restrict b, const SPair* restrict p);
-Body* body_insert_move(Body* restrict b, SPair* restrict p);
 void* body_get(const Body* restrict b, const char* restrict key);
 void body_delete(Body* b);
+
+#ifdef DEBUG
+void Body_print(const Body* b);
+#endif
 
 #endif

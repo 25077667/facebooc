@@ -1,56 +1,48 @@
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "list.h"
+#include "utility.h"
 
-List* insert(const void* restrict value, size_t size, const List* restrict next) {
-	List* new_node = malloc(sizeof(List));
-	new_node->value = malloc(size);
-	memcpy(new_node->value, value, size);
-	new_node->next = (List*)next;
-	return new_node;
+#include <stdlib.h>
+
+void List_ctor(List* head) {
+	head->next = head;
+	head->prev = head;
 }
 
-List* insert_move(void* restrict value, const List* restrict next) {
-	List* new_node = malloc(sizeof(List));
-	new_node->value = value;
-	new_node->next = (List*)next;
-	value = NULL;
-	return new_node;
+void List_insert_head(List* restrict head, List* restrict new_node) {
+	if(unlikely(!head) || unlikely(!new_node))
+		return;
+
+	List* next = head->next;
+
+	next->prev = new_node;
+	new_node->next = next;
+	new_node->prev = head;
+	head->next = new_node;
 }
 
-void clear(List* node, List_op free_func) {
-	while(node != NULL) {
-		const List* tmp = node->next;
-		free_func(node->value);
-		free(node);
-		node = (List*)tmp;
-	}
+void List_insert_tail(List* restrict head, List* restrict new_node) {
+	List* prev = head->prev;
+
+	prev->next = new_node;
+	new_node->next = head;
+	new_node->prev = prev;
+	head->prev = new_node;
 }
 
-_Bool listForEach(List* node, List_op func) {
-	_Bool result = true;
-	List** indrect = &node;
+int List_size(const List* head) {
+	int counter = 0;
 
-	while(*indrect != NULL && result) {
-		result = func((void*)(*indrect)->value);  // Do it
-		indrect = (List**)&((*indrect)->next);	  // To next
-	}
-
-	return result;
-}
-
-List* reverse(List* head) {
-	List* cur = head;
-	List* prev = NULL;
-
-	while(cur) {
-		List* tmp = cur->next;
-		cur->next = prev;
-		prev = cur;
-		cur = tmp;
+	const List* cur = NULL;
+	list_for_each(cur, head) {
+		++counter;
 	}
 
-	return prev;
+	return counter;
+}
+
+int List_is_empty(const List* head) {
+	if(unlikely(!head))
+		return 1;
+
+	return head->next == head;
 }

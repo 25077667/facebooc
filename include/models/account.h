@@ -16,6 +16,11 @@ typedef struct Account {
 	char* username;
 } Account;
 
+typedef struct Accounts {
+	Account* a;
+	List list;
+} Accounts;
+
 // Account ctor
 Account* accountNew(int id, int create_at, const char* name, const char* email,
 					const char* username);
@@ -29,11 +34,11 @@ Account* accountGetById(sqlite3* db, int uid);
 Account* accountGetByEmail(sqlite3* db, const char* email);
 // Get account by sid, return NULL if not found
 Account* accountGetBySId(sqlite3* db, const char* sid);
-// Find name or emmail or username from db
+// Find name or email or username from db
 //
 // Detail: @page is the OFFSET you had viewed, because of the performance issue
 // 		   we search a page (10 entries) once.
-List* accountSearch(sqlite3* db, const char* what_to_search, int page);
+Accounts* accountSearch(sqlite3* db, const char* what_to_search, int page);
 // Check if username is taken
 bool accountCheckUsername(sqlite3* db, const char* username);
 // Check if email is taken
@@ -42,5 +47,9 @@ bool accountCheckEmail(sqlite3* db, const char* email);
 bool account_auth(sqlite3* db, const char* username, const char* password);
 // Account dtor, pass NULL is safe
 void accountDel(Account* acc);
+
+void accounts_delete(Accounts* as);
+
+int accounts_is_empty(const Accounts* as);
 
 #endif

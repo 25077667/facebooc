@@ -3,8 +3,6 @@
 #include "utility.h"
 
 #include <ctype.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -43,18 +41,19 @@ static void urldecode2(char* dst, const char* src) {
 char* url_decoder(const char* str) {
 	// Each '%' symbol will brought another 2 characters behind it
 	int percent_counter = 0;
-	char* shadow_str = (char*)str;
+	const char* shadow_str = str;
 	while((*shadow_str++))
 		if(*shadow_str == '%')
 			++percent_counter;
 
-	char* new_url = malloc(strlen(str) - percent_counter * 2 + 1);
+	// Remain more space for some utilities, which needs some other token to make parser easier
+	const int REMAIN_SPACE = 16;
+	char* new_url = malloc(strlen(str) - percent_counter * 2 + 1 + REMAIN_SPACE);
 
 	urldecode2(new_url, str);
 	return new_url;
 }
 
-// Case sensitive
 SPair* query_entry(const char* str) {
 	const char* seperator = find_first_of(str, "=");
 	struct string_view key = { .begin = str, .end = seperator, .size = seperator - str };
@@ -62,4 +61,26 @@ SPair* query_entry(const char* str) {
 								 .end = str + strlen(str) + 1,
 								 .size = strlen(str) - key.size - 1 };
 	return make_pair(&key, &value);
+}
+
+SPair* pair_lexer(const char* str, char delim, char term) {
+	SPair* p = NULL;
+	if(str == NULL || *str == 0)
+		goto ret;
+
+	const char* delim_ptr = strchr(str, delim);
+	if(delim_ptr == NULL)
+		goto ret;
+
+	const char* term_ptr = strchr(delim_ptr + 1, term);
+	if(term_ptr == NULL)
+		goto ret;
+
+	string_view key = { .begin = str, .end = delim_ptr, .size = delim_ptr - str };
+	string_view value = { .begin = delim_ptr + 1, .end = term_ptr, .size = term_ptr - delim_ptr };
+
+	p = make_pair(&key, &value);
+
+ret:
+	return p;
 }

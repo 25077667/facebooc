@@ -38,19 +38,21 @@ Cookies* Cookies_init(const char* key, const char* value);
 // Use key to search the cookie
 // Return NULL if not found
 Cookie* Cookies_get(const Cookies* c, const char* key);
-void Cookies_delete(Cookies*);
+void Cookies_delete(Cookies* c);
 
-// Overwrite default attribution
-void Cookies_set_attr(Cookies* c, const char* key, Cookie_attr attr, const char* attr_value);
+// --------- Single cookie ---------
+Cookie* Cookie_init(const SSPair* p);
 
-char* Cookie_to_string(const Cookies* c);
+Cookie* Cookie_init_move(SSPair* p);
 
-void Cookie_gen_expire(char dst[64], int duration);
+char* Cookie_to_string(const Cookie* c);
 
-// Equivalent to Cookie_gen_expire + Cookies_set_attr(expire)
-void Cookies_set_expire(Cookies* c, const char* key, int dutation);
+void Cookie_gen_expire(char* buf, int duration);
+void Cookie_set_attr(Cookie* c, Cookie_attr attr, const char* value);
 
-#define Cookie_get_attr(cookie_p, attr) (((char**)cookie_p)[attr])
+void Cookie_delete(Cookie* c);
+
+#define Cookie_get_attr(cookie_p, attr) (((const char**)cookie_p)[attr])
 
 #ifdef DEBUG
 void Cookies_print(const Cookies* c);

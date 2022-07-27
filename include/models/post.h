@@ -15,11 +15,21 @@ typedef struct Post {
 	char* body;
 } Post;
 
-Post* postNew(int, int, int, const char*);
-Post* postCreate(sqlite3*, int uid, const char* body);
-Post* postGetById(sqlite3*, int);
-List* postGetLatest(sqlite3*, int, int);
-List* postGetLatestGraph(sqlite3*, int, int);
-void postDel(Post*);
+typedef struct Posts {
+	Post* p;
+	List list;
+} Posts;
+
+Post* postNew(int id, int createdAt, int authorId, const char* body);
+Post* postCreate(sqlite3* db, int uid, const char* body);
+Post* postGetById(sqlite3* db, int id);
+Posts* postGetLatest(sqlite3* db, int authorId, int page);
+Posts* postGetLatestGraph(sqlite3*, int authorId, int page);
+void postDel(Post* p);
+
+// Posts' destructor
+void Posts_delete(Posts* ps);
+
+int Posts_is_empty(const Posts* ps);
 
 #endif

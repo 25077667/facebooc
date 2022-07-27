@@ -8,18 +8,18 @@
 #include <stdio.h>
 #endif
 
-struct string_view string_view_ctor(const char* buf, const char* delim) {
+string_view string_view_ctor(const char* buf, const char* delim) {
 	long size = -1;
 	const char* end = find_first_of(buf, delim) + 1;
 	if(end != (void*)1)
 		size = end - buf;
 
-	struct string_view sv = { .begin = buf, .end = end, .size = size };
+	string_view sv = { .begin = buf, .end = end, .size = size };
 	return sv;
 }
 
 #ifdef DEBUG
-void string_view_show(const struct string_view* const sv) {
+void string_view_show(const string_view* const sv) {
 	if(sv->size == -1)
 		return;
 
@@ -31,7 +31,7 @@ void string_view_show(const struct string_view* const sv) {
 }
 #endif
 
-char* string_view_dup(const struct string_view* const sv) {
+char* string_view_dup(const string_view* const sv) {
 	char* copy = NULL;
 	if(sv->size != -1) {
 		copy = malloc(sv->size + 1);

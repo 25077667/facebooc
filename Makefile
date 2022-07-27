@@ -12,7 +12,7 @@ SRC = $(shell find src/ -type f -name "*.[ch]") \
 OBJS = $(patsubst %.c,%.o, $(filter %.c, $(SRC)))
 STATICS = static/css/main.css templates/version.html
 
-all: $(GIT_HOOKS) $(EXEC) main.c
+all: $(GIT_HOOKS) $(EXEC) $(STATICS)
 
 $(EXEC): $(OBJS) main.c
 	mkdir -p $(OUT_DIR)
@@ -53,7 +53,7 @@ clean:
 distclean: clean
 	$(RM) db.sqlite3
 
-$(GIT_HOOKS): format
+$(GIT_HOOKS):
 	@scripts/install-git-hooks
 	@echo
 

@@ -7,6 +7,8 @@
 #include "utility.h"
 #include <string.h>
 
+static inline Accounts* Accounts_new(void);
+
 Account* accountNew(int id, int createdAt, const char* name, const char* email,
 					const char* username) {
 	Account* account = malloc(sizeof(Account));
@@ -24,8 +26,7 @@ Account* accountGetById(sqlite3* DB, int id) {
 	if(id == -1)
 		return NULL;
 
-	Account* account = NULL;
-	sqlite3_stmt* statement;
+	sqlite3_stmt* statement = NULL;
 	if(sqlite3_prepare_v2(DB,
 						  "SELECT id, createdAt, name, email, username"
 						  "  FROM accounts"
@@ -40,10 +41,10 @@ Account* accountGetById(sqlite3* DB, int id) {
 	if(sqlite3_step(statement) != SQLITE_ROW)
 		goto fail;
 
-	account = accountNew(sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
-						 (char*)sqlite3_column_text(statement, 2),
-						 (char*)sqlite3_column_text(statement, 3),
-						 (char*)sqlite3_column_text(statement, 4));
+	Account* account = accountNew(
+		sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
+		(char*)sqlite3_column_text(statement, 2), (char*)sqlite3_column_text(statement, 3),
+		(char*)sqlite3_column_text(statement, 4));
 
 fail:
 	sqlite3_finalize(statement);
@@ -52,13 +53,13 @@ fail:
 
 Account* accountCreate(sqlite3* DB, const char* name, const char* email, const char* username,
 					   const char* password) {
-	int rc;
+
 	Account* account = NULL;
 	sqlite3_stmt* statement;
-	rc = sqlite3_prepare_v2(DB,
-							"INSERT INTO accounts(createdAt, name, email, username, password)"
-							"     VALUES         (        ?,    ?,     ?,        ?,        ?)",
-							-1, &statement, NULL);
+	int rc = sqlite3_prepare_v2(DB,
+								"INSERT INTO accounts(createdAt, name, email, username, password)"
+								"     VALUES         (        ?,    ?,     ?,        ?,        ?)",
+								-1, &statement, NULL);
 
 	if(rc != SQLITE_OK)
 		return NULL;
@@ -154,25 +155,23 @@ fail:
 	return account;
 }
 
-List* accountSearch(sqlite3* DB, const char* query, int page) {
+Accounts* accountSearch(sqlite3* DB, const char* query, int page) {
 	if(!query)
 		return NULL;
 
-	int rc;
-	Account* account = NULL;
-	List* accounts = NULL;
-	sqlite3_stmt* statement;
+	Accounts* accounts = Accounts_new();
+	sqlite3_stmt* statement = NULL;
 
-	rc = sqlite3_prepare_v2(DB,
-							"SELECT id, createdAt, name, email, username"
-							"  FROM accounts"
-							" WHERE name     LIKE '%' || ? || '%'"
-							"    OR email    LIKE '%' || ? || '%'"
-							"    OR username LIKE '%' || ? || '%'"
-							" ORDER BY createdAt DESC"
-							" LIMIT 10 "
-							"OFFSET ?",
-							-1, &statement, NULL);
+	int rc = sqlite3_prepare_v2(DB,
+								"SELECT id, createdAt, name, email, username"
+								"  FROM accounts"
+								" WHERE name     LIKE '%' || ? || '%'"
+								"    OR email    LIKE '%' || ? || '%'"
+								"    OR username LIKE '%' || ? || '%'"
+								" ORDER BY createdAt DESC"
+								" LIMIT 10 "
+								"OFFSET ?",
+								-1, &statement, NULL);
 
 	if(rc != SQLITE_OK)
 		return NULL;
@@ -186,11 +185,14 @@ List* accountSearch(sqlite3* DB, const char* query, int page) {
 		goto fail;
 
 	while(sqlite3_step(statement) == SQLITE_ROW) {
-		account = accountNew(sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
-							 (char*)sqlite3_column_text(statement, 2),
-							 (char*)sqlite3_column_text(statement, 3),
-							 (char*)sqlite3_column_text(statement, 4));
-		accounts = insert(account, sizeof(Account), accounts);
+		Account* account = accountNew(
+			sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
+			(char*)sqlite3_column_text(statement, 2), (char*)sqlite3_column_text(statement, 3),
+			(char*)sqlite3_column_text(statement, 4));
+
+		Accounts* new_accounts = Accounts_new();
+		new_accounts->a = account;
+		List_insert_tail(&accounts->list, &new_accounts->list);
 	}
 
 fail:
@@ -272,4 +274,33 @@ bool account_auth(sqlite3* DB, const char* username, const char* password) {
 	bool res = !strcmp(real_pwd, password);
 	sqlite3_finalize(statement);
 	return res;
+}
+
+static inline Accounts* Accounts_new(void) {
+	Accounts* a = malloc(sizeof(Accounts));
+	a->a = NULL;
+	List_ctor(&a->list);
+
+	return a;
+}
+
+void accounts_delete(Accounts* as) {
+	if(unlikely(!as))
+		return;
+
+	List *node = NULL, *safe = NULL;
+	list_for_each_safe(node, safe, &as->list) {
+		Accounts* as_node = container_of(node, Accounts, list);
+		accountDel(as_node->a);
+		free(as_node);
+	}
+
+	// Delete head, which is an empty node
+	accountDel(as->a);
+	free(as);
+	as = NULL;
+}
+
+int accounts_is_empty(const Accounts* as) {
+	return List_is_empty(&as->list);
 }

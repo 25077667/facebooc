@@ -3,6 +3,8 @@
 #include "bs.h"
 #include "models/post.h"
 
+static inline Posts* Posts_new(void);
+
 Post* postNew(int id, int createdAt, int authorId, const char* body) {
 	Post* post = malloc(sizeof(Post));
 
@@ -76,23 +78,21 @@ fail:
 	return post;
 }
 
-List* postGetLatest(sqlite3* DB, int accountId, int page) {
+Posts* postGetLatest(sqlite3* DB, int accountId, int page) {
 	if(accountId == -1)
 		return NULL;
 
-	int rc;
-	Post* post = NULL;
-	List* posts = NULL;
+	Posts* ps = Posts_new();
 	sqlite3_stmt* statement = NULL;
 
-	rc = sqlite3_prepare_v2(DB,
-							"SELECT id, createdAt, author, body"
-							"  FROM posts"
-							" WHERE author = ?"
-							" ORDER BY createdAt DESC"
-							" LIMIT 10 "
-							"OFFSET ?",
-							-1, &statement, NULL);
+	int rc = sqlite3_prepare_v2(DB,
+								"SELECT id, createdAt, author, body"
+								"  FROM posts"
+								" WHERE author = ?"
+								" ORDER BY createdAt DESC"
+								" LIMIT 10 "
+								"OFFSET ?",
+								-1, &statement, NULL);
 
 	if(rc != SQLITE_OK)
 		return NULL;
@@ -102,39 +102,37 @@ List* postGetLatest(sqlite3* DB, int accountId, int page) {
 		goto fail;
 
 	while(sqlite3_step(statement) == SQLITE_ROW) {
-		post = postNew(sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
-					   sqlite3_column_int(statement, 2),
-					   bsNewline2BR((char*)sqlite3_column_text(statement, 3)));
-		posts = insert(post, sizeof(Post), posts);
-	}
+		Posts* new_ps = Posts_new();
+		new_ps->p = postNew(sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
+							sqlite3_column_int(statement, 2),
+							bsNewline2BR((char*)sqlite3_column_text(statement, 3)));
 
-	posts = reverse(posts);
+		List_insert_tail(&ps->list, &new_ps->list);
+	}
 
 fail:
 	sqlite3_finalize(statement);
-	return posts;
+	return ps;
 }
 
-List* postGetLatestGraph(sqlite3* DB, int accountId, int page) {
+Posts* postGetLatestGraph(sqlite3* DB, int accountId, int page) {
 	if(accountId == -1)
 		return NULL;
 
-	int rc;
-	Post* post = NULL;
-	List* posts = NULL;
-	sqlite3_stmt* statement;
+	Posts* ps = Posts_new();
+	sqlite3_stmt* statement = NULL;
 
-	rc = sqlite3_prepare_v2(DB,
-							"SELECT posts.id, posts.createdAt, posts.author, posts.body"
-							"  FROM posts"
-							"  LEFT OUTER JOIN connections"
-							"    ON posts.author = connections.account2"
-							" WHERE connections.account1 = ?"
-							"    OR posts.author = ?"
-							" ORDER BY posts.createdAt DESC"
-							" LIMIT 10 "
-							"OFFSET ?",
-							-1, &statement, NULL);
+	int rc = sqlite3_prepare_v2(DB,
+								"SELECT posts.id, posts.createdAt, posts.author, posts.body"
+								"  FROM posts"
+								"  LEFT OUTER JOIN connections"
+								"    ON posts.author = connections.account2"
+								" WHERE connections.account1 = ?"
+								"    OR posts.author = ?"
+								" ORDER BY posts.createdAt DESC"
+								" LIMIT 10 "
+								"OFFSET ?",
+								-1, &statement, NULL);
 
 	if(rc != SQLITE_OK)
 		return NULL;
@@ -146,21 +144,54 @@ List* postGetLatestGraph(sqlite3* DB, int accountId, int page) {
 		goto fail;
 
 	while(sqlite3_step(statement) == SQLITE_ROW) {
-		post = postNew(sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
-					   sqlite3_column_int(statement, 2),
-					   bsNewline2BR((char*)sqlite3_column_text(statement, 3)));
-		posts = insert(post, sizeof(Post), posts);
-	}
+		Posts* new_ps = Posts_new();
+		new_ps->p = postNew(sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
+							sqlite3_column_int(statement, 2),
+							bsNewline2BR((char*)sqlite3_column_text(statement, 3)));
 
-	posts = reverse(posts);
+		List_insert_tail(&ps->list, &new_ps->list);
+	}
 
 fail:
 	sqlite3_finalize(statement);
-	return posts;
+	return ps;
 }
 
 void postDel(Post* post) {
+	if(!post)
+		return;
+
 	bsDel(post->body);
 	free(post);
 	post = NULL;
+}
+
+static inline Posts* Posts_new(void) {
+	Posts* ps = malloc(sizeof(Posts));
+	ps->p = NULL;
+
+	List_ctor(&ps->list);
+
+	return ps;
+}
+
+void Posts_delete(Posts* ps) {
+	if(unlikely(!ps))
+		return;
+
+	List *node = NULL, *safe = NULL;
+	list_for_each_safe(node, safe, &ps->list) {
+		Posts* ps_node = container_of(node, Posts, list);
+		postDel(ps_node->p);
+		free(ps_node);
+	}
+
+	// Delete head, which is an empty node
+	postDel(ps->p);
+	free(ps);
+	ps = NULL;
+}
+
+int Posts_is_empty(const Posts* ps) {
+	return List_is_empty(&ps->list);
 }

@@ -65,8 +65,7 @@ void responseSetBody_data_move(Response* restrict r, void* restrict ctx, size_t 
 
 int response_get_status(const Response* r);
 
-// Only add the first cookie entry, and ignore any other cookies
-void responseAddCookie(Response* restrict r, const Cookies* restrict cookie_entry);
+void responseAddCookie(Response* restrict r, const Cookie* restrict cookie_entry);
 void responseAddHeader(Response* restrict r, const SSPair* restrict p);
 void responseAddHeader_move(Response* restrict r, SSPair* restrict p);
 void responseDel(Response* r);
