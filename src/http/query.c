@@ -30,9 +30,10 @@ Query* query_parser(const char* buffer) {
 	Query* q = Query_new(NULL);
 
 	char* decoded = url_decoder(buffer);
+	char* decoded_shadow = decoded;
 	char* decoded_end__ = decoded + strlen(decoded);
 	decoded_end__[0] = '&';
-	decoded[1] = 0;
+	decoded_end__[1] = 0;
 
 	while(*decoded) {
 		SSPair* new_entry = (SSPair*)pair_lexer(decoded, '=', '&');
@@ -44,6 +45,7 @@ Query* query_parser(const char* buffer) {
 
 		decoded = strchr(decoded, '&') + 1;
 	}
+	free(decoded_shadow);
 
 	return q;
 }

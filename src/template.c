@@ -83,6 +83,7 @@ char* templateRender(const Template* template) {
 				segment[strlen(segment) - 1] = '\0';
 
 				Template* inc = templateNew(segment);
+				Hash_map_delete(inc->context);
 				inc->context = template->context;
 				char* incBs = templateRender(inc);
 

@@ -73,18 +73,11 @@ void responseSetStatus(Response* response, Status status) {
 	response->status = status;
 }
 
-void responseSetBody(Response* restrict response, const char* restrict ctx) {
+void responseSetBody_move(Response* restrict response, const char* restrict ctx) {
 	free((void*)response->body);
 	response->body = strdup(ctx);
-	response->body_len = strlen(ctx);
-}
-
-void responseSetBody_move(Response* restrict r, char* restrict ctx) {
-	free((void*)r->body);
-
-	r->body = ctx;
-	r->body_len = strlen(r->body);
-	ctx = NULL;
+	response->body_len = bsGetLen(ctx);
+	bsDel((char*)ctx);
 }
 
 void responseSetBody_data(Response* restrict r, const void* restrict ctx, size_t len) {

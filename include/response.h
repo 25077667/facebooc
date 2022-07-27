@@ -57,8 +57,9 @@ typedef struct Response Response;
 Response* responseNew();
 Response* responseNewRedirect(const char* location);
 void responseSetStatus(Response* r, Status);
-void responseSetBody(Response* restrict r, const char* restrict ctx);
-void responseSetBody_move(Response* restrict r, char* restrict ctx);
+
+// ! This ctx is bs
+void responseSetBody_move(Response* restrict r, const char* restrict ctx);
 
 void responseSetBody_data(Response* restrict r, const void* restrict ctx, size_t len);
 void responseSetBody_data_move(Response* restrict r, void* restrict ctx, size_t len);

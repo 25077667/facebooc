@@ -102,12 +102,14 @@ Posts* postGetLatest(sqlite3* DB, int accountId, int page) {
 		goto fail;
 
 	while(sqlite3_step(statement) == SQLITE_ROW) {
+		char* tmp_body = bsNewline2BR((char*)sqlite3_column_text(statement, 3));
+
 		Posts* new_ps = Posts_new();
 		new_ps->p = postNew(sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
-							sqlite3_column_int(statement, 2),
-							bsNewline2BR((char*)sqlite3_column_text(statement, 3)));
+							sqlite3_column_int(statement, 2), tmp_body);
 
 		List_insert_tail(&ps->list, &new_ps->list);
+		bsDel(tmp_body);
 	}
 
 fail:
@@ -144,12 +146,13 @@ Posts* postGetLatestGraph(sqlite3* DB, int accountId, int page) {
 		goto fail;
 
 	while(sqlite3_step(statement) == SQLITE_ROW) {
+		char* tmp_body = bsNewline2BR((char*)sqlite3_column_text(statement, 3));
 		Posts* new_ps = Posts_new();
 		new_ps->p = postNew(sqlite3_column_int(statement, 0), sqlite3_column_int(statement, 1),
-							sqlite3_column_int(statement, 2),
-							bsNewline2BR((char*)sqlite3_column_text(statement, 3)));
+							sqlite3_column_int(statement, 2), tmp_body);
 
 		List_insert_tail(&ps->list, &new_ps->list);
+		bsDel(tmp_body);
 	}
 
 fail:

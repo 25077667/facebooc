@@ -215,7 +215,7 @@ static Response* home(Request* req) {
 	responseSetStatus(response, OK);
 	templateSet(template, "active", "home");
 	templateSet(template, "subtitle", "Home");
-	responseSetBody(response, templateRender(template));
+	responseSetBody_move(response, templateRender(template));
 	templateDel(template);
 	return response;
 }
@@ -288,7 +288,7 @@ static Response* dashboard(Request* req) {
 	templateSet(template, "accountName", my_acc->name);
 	Response* response = responseNew();
 	responseSetStatus(response, OK);
-	responseSetBody(response, templateRender(template));
+	responseSetBody_move(response, templateRender(template));
 	templateDel(template);
 	accountDel((Account*)my_acc);
 	return response;
@@ -388,7 +388,7 @@ static Response* profile(Request* req) {
 	templateSet(template, "accountName", my_acc->name);
 	Response* response = responseNew();
 	responseSetStatus(response, OK);
-	responseSetBody(response, templateRender(template));
+	responseSetBody_move(response, templateRender(template));
 	accountDel((Account*)my_acc);
 	accountDel((Account*)acc2);
 	templateDel(template);
@@ -532,7 +532,7 @@ static Response* search(Request* req) {
 	templateSet(template, "active", "search");
 	templateSet(template, "loggedIn", "t");
 	templateSet(template, "subtitle", "Search");
-	responseSetBody(response, templateRender(template));
+	responseSetBody_move(response, templateRender(template));
 	templateDel(template);
 	return response;
 }
@@ -594,7 +594,7 @@ static Response* login(Request* req) {
 		}
 	}
 
-	responseSetBody(response, templateRender(template));
+	responseSetBody_move(response, templateRender(template));
 
 ret:
 	templateDel(template);
@@ -712,7 +712,7 @@ static Response* signup(Request* req) {
 		}
 	}
 
-	responseSetBody(response, templateRender(template));
+	responseSetBody_move(response, templateRender(template));
 ret:
 	templateDel(template);
 	return response;
@@ -728,7 +728,7 @@ static Response* notFound(Request* req) {
 	templateSet(template, "loggedIn", is_loggedIn ? "t" : "");
 	templateSet(template, "subtitle", "404 Not Found");
 	responseSetStatus(response, NOT_FOUND);
-	responseSetBody(response, templateRender(template));
+	responseSetBody_move(response, templateRender(template));
 	templateDel(template);
 	return response;
 }
