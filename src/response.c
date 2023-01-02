@@ -79,7 +79,7 @@ void responseSetStatus(Response *response, Status status)
 void responseSetBody(Response *restrict r, const Basic_string *restrict ctx)
 {
     free((char *) r->body);
-    r->body = strdup(ctx->data);
+    r->body = memdup(ctx->data, ctx->size);
     r->body_len = ctx->size;
 }
 
