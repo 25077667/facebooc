@@ -74,10 +74,10 @@ void Basic_string_append_raw(Basic_string *dst, const char *src)
     if (unlikely(!dst || !dst->data || !src || !*src))
         return;
 
-    size_t len = strlen(src);
-    dst->data = realloc(dst->data, dst->size + len + 1);
-    strncpy(dst->data + dst->size, src, len);
-    dst->size += len;
+    const size_t src_len = strlen(src);
+    dst->data = realloc(dst->data, dst->size + src_len + 1);
+    memcpy(dst->data + dst->size, src, src_len);
+    dst->size += src_len;
 
     dst->data[dst->size] = 0;
 }

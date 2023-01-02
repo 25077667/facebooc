@@ -214,7 +214,7 @@ void html_escape_trans(Basic_string *str)
     for (size_t i = 0; i < str->size; i++) {
         for (size_t j = 0; j < ARR_LEN(escape_key); j++) {
             if (unlikely(str->data[i] == escape_key[j])) {
-                strncpy(new_buf, escape_map[j], 5);
+                memcpy(new_buf, escape_map[j], strlen(escape_map[j]));
                 new_buf += 5;
                 goto have_escape;
             }
