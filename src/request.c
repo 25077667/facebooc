@@ -37,18 +37,20 @@ static inline Request* request_ctor() {
 	return request;
 }
 
-static inline size_t get_uri_len(const char* buf) {
-	size_t cur = -1;
+static inline int get_uri_len(const char* buf) {
+	// Input string is the first line of HTTP request
 
-	while(buf[++cur] != ' ')
-		;
+	// Find the first space
+	const char* begin = strchr(buf, ' ');
+	if(!begin)
+		return -1;
 
-	// Start the uri
-	size_t counter = 0;
-	while(buf[++cur] != ' ')  // end of uri is a space
-		++counter;
+	// Find the second space
+	const char* end = strchr(begin + 1, ' ');
+	if(!end)
+		return -1;
 
-	return counter;
+	return end - begin - 1;
 }
 
 // Parse Request line, rfc2616 section 5.1
@@ -56,8 +58,10 @@ static inline size_t get_uri_len(const char* buf) {
 static inline _Bool parse_request_line(Request* req, const char* buf, size_t* offset) {
 	// Suppose buf is not empty (Remove un-essential branch)
 
-	// Get uri len
-	const size_t uri_len = get_uri_len(buf);
+	// Get uri len, max len is 8192 (RFC 7230 section 3.1.1)
+	const int uri_len = get_uri_len(buf);
+	if(uri_len == -1 || uri_len > 8192)
+		return false;
 
 	char method[8];
 	char* uri = malloc(uri_len + 1);
