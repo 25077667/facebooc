@@ -81,7 +81,7 @@ static inline int makeSocket(unsigned int port)
                                      .sin_addr.s_addr = htons(INADDR_ANY)};
 
     if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-        fprintf(stderr, "error: failed to bind socket to 0.0.0.0:%d\n", port);
+        fprintf(stderr, "error: failed to bind socket to 0.0.0.0:%u \n", port);
         exit(1);
     }
 

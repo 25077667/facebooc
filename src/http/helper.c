@@ -9,8 +9,8 @@
 // https://stackoverflow.com/a/14530993
 static void urldecode2(char *dst, const char *src)
 {
-    char a, b;
     while (*src) {
+        char a, b;
         if ((*src == '%') && ((a = src[1]) && (b = src[2])) &&
             (isxdigit(a) && isxdigit(b))) {
             if (a >= 'a')

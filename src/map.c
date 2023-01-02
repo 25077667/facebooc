@@ -18,8 +18,7 @@ static inline int cmpf(const void *a, const void *b)
 Map *Map_new()
 {
     Map *m = malloc(sizeof(Map));
-    const rbtree_t *tree_ = rbtree_create(cmpf);
-    memcpy(m->tree, tree_, sizeof(rbtree_t));
+    m->tree = rbtree_create(cmpf);
     return m;
 }
 

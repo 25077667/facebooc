@@ -149,6 +149,7 @@ static inline Basic_string *readfile(const char *filename)
     FILE *file = fopen(filename, "r");
     if (unlikely(!file)) {
         fprintf(stderr, "error: template '%s' not found\n", filename);
+        fclose(file);
         return NULL;
     }
 

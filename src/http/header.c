@@ -174,7 +174,15 @@ char *header_to_string(const Header *h)
         const size_t value_len = strlen(h_node->entry->value);
         const size_t entry_len = key_len + value_len + 5;  // Add ": \r\n"
         if (unlikely(entry_len + index > RESP_SIZE)) {
-            sbuf = realloc(sbuf, (RESP_SIZE <<= 1));
+            char *new_buf = realloc(sbuf, (RESP_SIZE <<= 1));
+
+            // free the memory if realloc failed
+            if (unlikely(!new_buf)) {
+                free(new_buf);
+                free(sbuf);
+                return NULL;
+            }
+            sbuf = new_buf;
         }
 
         header_entry_to_string__(sbuf + index, entry_len, h_node->entry);

@@ -32,9 +32,9 @@ Basic_string *base64_encode(const void *data, size_t len)
     char *out_data = out->data;
     for (size_t i = 0; len - i > 2; i += 3) {
         // Process triple byte in once
-        uint32_t triple = ((*(uint8_t *) (data + i)) << 0x10) |
-                          ((*(uint8_t *) (data + i + 1)) << 0x08) |
-                          (*(uint8_t *) (data + i + 2));
+        uint32_t triple = ((*((uint8_t *) data + i)) << 0x10) |
+                          ((*((uint8_t *) data + i + 1)) << 0x08) |
+                          (*((uint8_t *) data + i + 2));
 
         // 3 byte of origin data are mapped on to 4 encoding elements
         *out_data++ = encoding_table[(triple >> 3 * 6) & 0x3F];
@@ -48,20 +48,18 @@ Basic_string *base64_encode(const void *data, size_t len)
     // If len % 3 == 1   ->  2 padding
     // If len % 3 == 2   ->  1 padding
     if (len % 3 == 1) {
+        *out_data++ = encoding_table[(*((uint8_t *) data + len - 1)) >> 2];
         *out_data++ =
-            encoding_table[(*(unsigned char *) (data + len - 1)) >> 2];
-        *out_data++ =
-            encoding_table[((*(unsigned char *) (data + len - 1)) & 0b11) << 4];
+            encoding_table[((*((uint8_t *) data + len - 1)) & 0b11) << 4];
         *out_data++ = '=';
         *out_data++ = '=';
     } else if (len % 3 == 2) {
+        *out_data++ = encoding_table[(*((uint8_t *) data + len - 2)) >> 2];
         *out_data++ =
-            encoding_table[(*(unsigned char *) (data + len - 2)) >> 2];
-        *out_data++ = encoding_table
-            [(((*(unsigned char *) (data + len - 2)) & 0b11) << 4) |
-             (((*(unsigned char *) (data + len - 1)) & 0xF0) >> 4)];
+            encoding_table[(((*((uint8_t *) data + len - 2)) & 0b11) << 4) |
+                           (((*((uint8_t *) data + len - 1)) & 0xF0) >> 4)];
         *out_data++ =
-            encoding_table[((*(unsigned char *) (data + len - 1)) & 0x0F) << 2];
+            encoding_table[((*((uint8_t *) data + len - 1)) & 0x0F) << 2];
         *out_data++ = '=';
     }
 

@@ -122,7 +122,7 @@ Response *static_handler(const Request *req)
     // static file is exist
     const char *mimeType = mimeType_mux(req->uri);
     char content_len[11];
-    snprintf(content_len, 11, "%ld", fm.len);
+    snprintf(content_len, 11, "%lu", fm.len);
 
     // RESPOND
     responseSetStatus(response, OK);
