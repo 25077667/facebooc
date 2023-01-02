@@ -8,22 +8,9 @@
 #include "request.h"
 #include "utility.h"
 
-static inline _Bool set_method(Request *req, const char *segment)
-{
-    static const char *methods__[] = {
-        "OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT",
-    };
-    const int len = sizeof(methods__) / sizeof(*methods__);
-
-    for (int i = 0; i < len; i++)
-        if (strcmp(segment, methods__[i]) == 0) {
-            CONST_INIT(req->method, i);
-            return true;
-        }
-
-    CONST_INIT(req->method, UNKNOWN_METHOD);
-    return false;
-}
+static const char *METHODS_LIST[] = {
+    "OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT",
+};
 
 static inline Request *request_ctor()
 {
@@ -37,6 +24,31 @@ static inline Request *request_ctor()
     request->headers = NULL;
     request->cookies = NULL;
     return request;
+}
+
+static inline Method get_method(const char *line)
+{
+    // Get method from request line (first line of HTTP request)
+    // Returns the global variable METHODS_LIST
+    // Return NULL if method is not found
+
+    // Find the first space
+    const char *begin = strchr(line, ' ');
+    if (!begin)
+        return UNKNOWN_METHOD;
+
+    // string matching from line to begin with global variable METHODS_LIST
+    for (int i = 0; i < 8; i++) {
+        if (strncmp(line, METHODS_LIST[i], begin - line) == 0)
+            return i;
+    }
+
+    return UNKNOWN_METHOD;
+}
+
+static inline _Bool check_http_version(const char *version)
+{
+    return strcmp(version, "HTTP/1.1") == 0 || strcmp(version, "HTTP/1.0") == 0;
 }
 
 static inline int get_uri_len(const char *buf)
@@ -69,24 +81,29 @@ static inline _Bool parse_request_line(Request *req,
     if (uri_len == -1 || uri_len > 8192)
         return false;
 
-    char method[8];
+    // Get method
+    Method method_index = get_method(buf);
+    if (method_index == UNKNOWN_METHOD)
+        return false;
+    CONST_INIT(req->method, method_index);
+    const char *const method = METHODS_LIST[method_index];
+
+    // Get uri
     char *uri = malloc(uri_len + 1);
-    char version[9];
-    sscanf(buf, "%s \t %s \t %s \r\n", method, uri, version);
+    memcpy(uri, buf + strlen(method) + 1, uri_len);
     uri[uri_len] = 0;
 
-    if (set_method(req, method) == false)
-        goto fail;
 
-    // Check version string
-    if (strncmp("HTTP/1.", version, 6))
-        goto fail;
-    if (version[7] != '1' && version[7] != '0')
-        goto fail;
+    // check if the HTTP version is valid
+    const char *version = buf + strlen(method) + uri_len + 1;
+    if (check_http_version(version) == true)
+        goto free_uri;
 
     // Actual init uri and path
     CONST_INIT(req->path, uri);
     CONST_INIT(req->uri, uri);
+
+
     *offset = strlen(method) + uri_len + strlen(version) +
               strlen(
                   " "
@@ -94,7 +111,7 @@ static inline _Bool parse_request_line(Request *req,
 
     return true;
 
-fail:
+free_uri:
     free(uri);
     return false;
 }
