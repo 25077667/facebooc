@@ -1,5 +1,10 @@
 # Facebooc
 
+:::info
+Because this project is forked from jserv and keeps contributing, 
+we checkout to `scc` branch that helps us switching to latest development. 
+:::
+
 Proof-of-concept Facebook clone in C.
 The only dependency is SQLite3 in C runtime.
 
