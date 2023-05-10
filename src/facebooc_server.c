@@ -36,7 +36,7 @@ struct __HANDLER_TABLE__ {
     register_handler_same_name(profile),
     register_handler_same_name(search),
     register_handler_same_name(signup),
-    register_handler_same_name(static_handler),
+    register_handler("static", static_handler),
 };
 
 // Facebooc is an directive class of Server
