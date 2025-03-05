@@ -3,13 +3,19 @@
 
 void Pair_delete(Pair *p)
 {
+    if (!p)
+        return;
     free(p->value);
     free(p);
 }
 
 void PPair_delete(PPair *p)
 {
-    return SPair_delete((SPair *) p);
+    if (!p)
+        return;
+    free(p->key);
+    free(p->value);
+    free(p);
 }
 
 void SPair_delete(SPair *p)
@@ -19,7 +25,6 @@ void SPair_delete(SPair *p)
     free(p->key);
     free(p->value);
     free(p);
-    p = NULL;
 }
 
 void SSPair_delete(SSPair *p)
@@ -29,5 +34,4 @@ void SSPair_delete(SSPair *p)
     free(p->key);
     free(p->value);
     free(p);
-    p = NULL;
 }
